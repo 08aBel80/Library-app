@@ -5,6 +5,7 @@
 - [Goal](#goal)
 - [Updates](#updates)
   - [Day 1 (2024/06/06)](#day-1-20240606)
+  - [Day 2 (2024/06/07)](#day-2-20240607)
 
 ## Introduction
 This project is a Library Management System built using Kotlin, managed with Gradle. It is designed to manage the borrowing and returning of books in a library.
