@@ -1,14 +1,14 @@
-import org.abel.app.Book
-import org.abel.app.ILibrary
-import org.abel.app.Library
-import org.abel.app.Member
 import org.abel.errors.BookNotAvailableException
 import org.abel.errors.BookNotFoundException
 import org.abel.errors.BookNotInPossessionException
 import org.abel.errors.MemberNotFoundException
+import org.abel.library.Book
+import org.abel.library.ILibrary
+import org.abel.library.Library
+import org.abel.library.Member
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import kotlin.test.Test
 
 class ModelsEqualTests {
     @Test

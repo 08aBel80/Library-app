@@ -1,0 +1,42 @@
+command,expected output contains (expected result should fit in one line) (this tests assume id-s are set incrementally starting from 1)
+help,help - Show available commands or see description
+help,add_book - Add a book to the library: add_book "<title>" "<author>"
+help,add_book - Add a book to the library: add_book "<title>" "<author>"
+help,add_member - Add a member to the library: add_member "<name>"
+help,borrow_book - Borrow a book: borrow_book <member_id> <book_id>
+help,return_book - Return a book: return_book <member_id> <book_id>
+help,find_member - Find member by id: find_member <member_id>
+help,find_book - Find book by id: find_member <book_id>
+help,list_books - List all books
+help,list_members - List all members
+help 1,Invalid number of arguments
+help 1 2 asd,Invalid number of arguments
+help asd,Invalid number of arguments
+
+list_books,No books in the library!
+list_members,No members in the library!
+list_books asdfga,Invalid number of arguments
+list_members asd,Invalid number of arguments
+
+find_member 1,not found
+find_book 1,not found
+find_member,Invalid number of arguments
+find_book,Invalid number of arguments
+
+add_book,Invalid number of arguments
+add_book "asd",Invalid number of arguments
+add_book "title" "author", "Book added Successfully!"
+list_books, "title='title', author='author', isAvailable=true"
+
+add_member,Invalid number of arguments
+add_member "asd",Invalid number of arguments
+add_member "name", "Member added Successfully!"
+list_members, "name='alex', books=[]"
+
+borrow_book,Invalid number of arguments
+borrow_book 1,Invalid number of arguments
+borrow_book 2 1,Book not found
+borrow_book 1 2,Member not found
+borrow_book 1 1,Book borrowed successfully!
+list_books, "title='title', author='author', isAvailable=false"
+list_members, "name='alex', books=[Book(id=1, title='title', author='author', isAvailable=false)]"

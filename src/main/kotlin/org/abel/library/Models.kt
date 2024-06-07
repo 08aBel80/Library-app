@@ -1,4 +1,4 @@
-package org.abel.app
+package org.abel.library
 
 import org.abel.errors.BookNotAvailableException
 import org.abel.errors.BookNotInPossessionException
@@ -9,7 +9,12 @@ data class Book(
     val title: String,
     val author: String,
     var isAvailable: Boolean = true
-)
+){
+    @Override
+    override fun toString(): String {
+        return "Book(id=$id, title='$title', author='$author', isAvailable=$isAvailable)"
+    }
+}
 
 data class Member(
     val id: Int,

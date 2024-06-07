@@ -1,4 +1,4 @@
-package org.abel.app
+package org.abel.library
 
 import org.abel.errors.BookNotAvailableException
 import org.abel.errors.BookNotFoundException
