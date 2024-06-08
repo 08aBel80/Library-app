@@ -1,14 +1,44 @@
+import org.abel.database.Books
+import org.abel.database.DatabaseManager
+import org.abel.database.Members
+import org.abel.database.SqlLibraryStorage
 import org.abel.errors.BookNotAvailableException
 import org.abel.errors.BookNotFoundException
 import org.abel.errors.BookNotInPossessionException
 import org.abel.errors.MemberNotFoundException
 import org.abel.library.Book
-import org.abel.library.ILibrary
-import org.abel.library.Library
+import org.abel.library.LibraryStorage
 import org.abel.library.Member
+import org.abel.simple.InMemoryLibraryStorage
+import org.jetbrains.exposed.sql.deleteAll
+import org.jetbrains.exposed.sql.transactions.transaction
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+
+
+private const val testingDatabaseEnabled: Boolean = true // Set this based on configuration
+private const val TEST_DATABASE_NAME = "build/test"
+
+fun getTestingLibraryStorage(): LibraryStorage {
+    return if (testingDatabaseEnabled) {
+        val testDatabaseManager = DatabaseManager(TEST_DATABASE_NAME)
+        SqlLibraryStorage(testDatabaseManager)
+    } else {
+        InMemoryLibraryStorage()
+    }
+}
+
+fun deleteTestingDatabase() {
+    if (testingDatabaseEnabled) {
+        transaction {
+            Members.deleteAll()
+            Books.deleteAll()
+        }
+    }
+}
+
 
 class ModelsEqualTests {
     @Test
@@ -32,12 +62,17 @@ class ModelsEqualTests {
     }
 }
 
-class LibraryCreationTests {
-    private lateinit var library: ILibrary
+class LibraryStorageCreationTests {
+    private lateinit var library: LibraryStorage
 
     @BeforeEach
     fun setup() {
-        library = Library()
+        library = getTestingLibraryStorage()
+    }
+
+    @AfterEach
+    fun tearDown() {
+        deleteTestingDatabase()
     }
 
     @Test
@@ -98,17 +133,22 @@ class LibraryCreationTests {
     }
 }
 
-class FilledLibraryTest {
-    private lateinit var library: ILibrary
+class FilledInMemoryLibraryStorageTest {
+    private lateinit var library: LibraryStorage
     private lateinit var m1: Member
     private lateinit var m2: Member
     private lateinit var b1: Book
     private lateinit var b2: Book
 
 
+    private lateinit var member1: Member
+    private lateinit var member2: Member
+    private lateinit var book1: Book
+    private lateinit var book2: Book
+
     @BeforeEach
     fun setup() {
-        library = Library()
+        library = getTestingLibraryStorage()
         library.addMember("John Doe")
         library.addMember("Jane Doe")
         library.addMember("Third Doe") // Added for testing purposes
@@ -123,6 +163,18 @@ class FilledLibraryTest {
         val books = library.getBooks()
         b1 = books.first()
         b2 = books.last()
+    }
+
+    @AfterEach
+    fun tearDown() {
+        deleteTestingDatabase()
+    }
+
+    private fun resetMembersAndBooks() {
+        member1 = library.findMemberById(m1.id)
+        member2 = library.findMemberById(m2.id)
+        book1 = library.findBookById(b1.id)
+        book2 = library.findBookById(b2.id)
     }
 
     @Test
@@ -144,112 +196,118 @@ class FilledLibraryTest {
     @Test
     fun borrowAndReturnBookTest() {
         library.borrowBook(m1.id, b1.id)
-        assert(library.findMemberById(m1.id).borrowedBooks.contains(b1))
-        assert(library.findMemberById(m2.id).borrowedBooks.size == 0)
-        assert(library.findMemberById(m1.id).borrowedBooks.size == 1)
-        assert(library.findBookById(b1.id).isAvailable.not())
-        assert(library.findBookById(b2.id).isAvailable)
+        resetMembersAndBooks()
+        assert(member1.borrowedBooks.contains(book1)) { Pair(member1, book1) }
+        assert(member2.borrowedBooks.size == 0) { member2 }
+        assert(member1.borrowedBooks.size == 1) { member1 }
+        assert(book1.isAvailable.not()) { book1 }
+        assert(book2.isAvailable) { book2 }
 
         library.borrowBook(m2.id, b2.id)
-        assert(library.findMemberById(m2.id).borrowedBooks.contains(b2))
-        assert(library.findMemberById(m1.id).borrowedBooks.size == 1)
-        assert(library.findMemberById(m1.id).borrowedBooks.size == 1)
-        assert(library.findBookById(b1.id).isAvailable.not())
-        assert(library.findBookById(b2.id).isAvailable.not())
+        resetMembersAndBooks()
+        assert(member2.borrowedBooks.contains(book2)) { Pair(member2, book2) }
+        assert(member2.borrowedBooks.size == 1) { member2 }
+        assert(member1.borrowedBooks.size == 1) { member1 }
+        assert(book1.isAvailable.not()) { book1 }
+        assert(book2.isAvailable.not()) { book2 }
 
         library.returnBook(m1.id, b1.id)
-        assert(library.findMemberById(m2.id).borrowedBooks.size == 1)
-        assert(library.findMemberById(m1.id).borrowedBooks.size == 0)
-        assert(library.findBookById(b1.id).isAvailable)
-        assert(library.findBookById(b2.id).isAvailable.not())
-
+        resetMembersAndBooks()
+        assert(member2.borrowedBooks.size == 1) { member2 }
+        assert(member1.borrowedBooks.size == 0) { member1 }
+        assert(book1.isAvailable) { book1 }
+        assert(book2.isAvailable.not()) { book2 }
 
         library.returnBook(m2.id, b2.id)
-        assert(library.findMemberById(m2.id).borrowedBooks.size == 0)
-        assert(library.findMemberById(m1.id).borrowedBooks.size == 0)
-        assert(library.findBookById(b1.id).isAvailable)
-        assert(library.findBookById(b2.id).isAvailable)
-
+        resetMembersAndBooks()
+        assert(member1.borrowedBooks.size == 0) { member1 }
+        assert(member2.borrowedBooks.size == 0) { member2 }
+        assert(book1.isAvailable) { book1 }
+        assert(book2.isAvailable) { book2 }
     }
 
     @Test
     fun bookNotAvailableExceptionTest() {
         library.borrowBook(m1.id, b1.id)
         library.borrowBook(m2.id, b2.id)
-
         assertThrows<BookNotAvailableException>() {
             library.borrowBook(m1.id, b1.id)
         }
-        assert(library.findMemberById(m1.id).borrowedBooks.size == 1)
-        assert(library.findMemberById(m2.id).borrowedBooks.size == 1)
-        assert(library.findBookById(b1.id).isAvailable.not())
-        assert(library.findBookById(b2.id).isAvailable.not())
+        resetMembersAndBooks()
+        assert(member1.borrowedBooks.size == 1) { member1 }
+        assert(member2.borrowedBooks.size == 1) { member2 }
+        assert(book1.isAvailable.not()) { book1 }
+        assert(book2.isAvailable.not()) { book2 }
 
         assertThrows<BookNotAvailableException>() {
             library.borrowBook(m2.id, b2.id)
         }
-        assert(library.findMemberById(m1.id).borrowedBooks.size == 1)
-        assert(library.findMemberById(m2.id).borrowedBooks.size == 1)
-        assert(library.findBookById(b1.id).isAvailable.not())
-        assert(library.findBookById(b2.id).isAvailable.not())
+        resetMembersAndBooks()
+        assert(member1.borrowedBooks.size == 1) { member1 }
+        assert(member2.borrowedBooks.size == 1) { member2 }
+        assert(book1.isAvailable.not()) { book1 }
+        assert(book2.isAvailable.not()) { book2 }
 
         assertThrows<BookNotAvailableException>() {
             library.borrowBook(m1.id, b2.id)
         }
-        assert(library.findMemberById(m1.id).borrowedBooks.size == 1)
-        assert(library.findMemberById(m2.id).borrowedBooks.size == 1)
-        assert(library.findBookById(b1.id).isAvailable.not())
-        assert(library.findBookById(b2.id).isAvailable.not())
+        resetMembersAndBooks()
+        assert(member1.borrowedBooks.size == 1) { member1 }
+        assert(member2.borrowedBooks.size == 1) { member2 }
+        assert(book1.isAvailable.not()) { book1 }
+        assert(book2.isAvailable.not()) { book2 }
 
         assertThrows<BookNotAvailableException>() {
             library.borrowBook(m2.id, b1.id)
         }
-        assert(library.findMemberById(m1.id).borrowedBooks.size == 1)
-        assert(library.findMemberById(m2.id).borrowedBooks.size == 1)
-        assert(library.findBookById(b1.id).isAvailable.not())
-        assert(library.findBookById(b2.id).isAvailable.not())
+        resetMembersAndBooks()
+        assert(member1.borrowedBooks.size == 1) { member1 }
+        assert(member2.borrowedBooks.size == 1) { member2 }
+        assert(book1.isAvailable.not()) { book1 }
+        assert(book2.isAvailable.not()) { book2 }
     }
 
     @Test
     fun bookNotInPossessionExceptionTest() {
         library.borrowBook(m1.id, b1.id)
         library.borrowBook(m2.id, b2.id)
-
         assertThrows<BookNotInPossessionException>() {
             library.returnBook(m1.id, b2.id)
         }
-
-        assert(library.findMemberById(m1.id).borrowedBooks.size == 1)
-        assert(library.findMemberById(m2.id).borrowedBooks.size == 1)
-        assert(library.findBookById(b1.id).isAvailable.not())
-        assert(library.findBookById(b2.id).isAvailable.not())
+        resetMembersAndBooks()
+        assert(member1.borrowedBooks.size == 1)
+        assert(member2.borrowedBooks.size == 1)
+        assert(book1.isAvailable.not())
+        assert(book2.isAvailable.not())
 
         assertThrows<BookNotInPossessionException>() {
             library.returnBook(m2.id, b1.id)
         }
-        assert(library.findMemberById(m1.id).borrowedBooks.size == 1)
-        assert(library.findMemberById(m2.id).borrowedBooks.size == 1)
-        assert(library.findBookById(b1.id).isAvailable.not())
-        assert(library.findBookById(b2.id).isAvailable.not())
+        resetMembersAndBooks()
+        assert(member1.borrowedBooks.size == 1) { member1 }
+        assert(member2.borrowedBooks.size == 1) { member2 }
+        assert(book1.isAvailable.not()) { book1 }
+        assert(book2.isAvailable.not()) { book2 }
 
         library.returnBook(m1.id, b1.id)
-
         assertThrows<BookNotInPossessionException>() {
             library.returnBook(m1.id, b1.id)
         }
-        assert(library.findMemberById(m1.id).borrowedBooks.size == 0)
-        assert(library.findMemberById(m2.id).borrowedBooks.size == 1)
-        assert(library.findBookById(b1.id).isAvailable)
-        assert(library.findBookById(b2.id).isAvailable.not())
+        resetMembersAndBooks()
+        assert(member1.borrowedBooks.size == 0) { member1 }
+        assert(member2.borrowedBooks.size == 1) { member2 }
+        assert(book1.isAvailable) { book1 }
+        assert(book2.isAvailable.not()) { book2 }
 
         library.returnBook(m2.id, b2.id)
         assertThrows<BookNotInPossessionException>() {
             library.returnBook(m2.id, b2.id)
         }
-        assert(library.findMemberById(m1.id).borrowedBooks.size == 0)
-        assert(library.findMemberById(m2.id).borrowedBooks.size == 0)
-        assert(library.findBookById(b1.id).isAvailable)
-        assert(library.findBookById(b2.id).isAvailable)
+        resetMembersAndBooks()
+        assert(member1.borrowedBooks.size == 0) { member1 }
+        assert(member2.borrowedBooks.size == 0) { member2 }
+        assert(book1.isAvailable) { book1 }
+        assert(book2.isAvailable) { book2 }
     }
 
     @Test

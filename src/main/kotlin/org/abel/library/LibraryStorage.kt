@@ -5,13 +5,13 @@ import org.abel.errors.BookNotFoundException
 import org.abel.errors.BookNotInPossessionException
 import org.abel.errors.MemberNotFoundException
 
-interface ILibrary {
+interface LibraryStorage {
     fun addMember(name: String)
 
     @Throws(MemberNotFoundException::class)
     fun findMemberById(id: Int): Member
 
-    fun addBook(name: String, author: String)
+    fun addBook(title: String, author: String)
 
     @Throws(MemberNotFoundException::class, BookNotFoundException::class, BookNotAvailableException::class)
     fun borrowBook(memberId: Int, bookId: Int)

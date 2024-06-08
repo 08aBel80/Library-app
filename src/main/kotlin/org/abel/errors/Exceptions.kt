@@ -5,10 +5,14 @@ import org.abel.library.Book
 
 class BookNotFoundException(id: Int) : Exception("Book with id $id not found")
 
-class BookNotAvailableException(book: Book) : Exception("Book '${book.title}' is not available")
+class BookNotAvailableException(title: String) : Exception("Book '${title}' is not available") {
+    constructor(book: Book) : this(book.title)
+}
 
-class BookNotInPossessionException(book: Book) :
-    Exception("Member doesn't have book '${book.title}' in their possession")
+class BookNotInPossessionException(title: String) :
+    Exception("Member doesn't have book '$title' in their possession") {
+    constructor(book: Book) : this(book.title)
+}
 
 class MemberNotFoundException(id: Int) : Exception("Member with id $id not found")
 

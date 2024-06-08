@@ -1,12 +1,17 @@
-package org.abel.library
+package org.abel.simple
 
+import org.abel.errors.BookNotAvailableException
 import org.abel.errors.BookNotFoundException
+import org.abel.errors.BookNotInPossessionException
 import org.abel.errors.MemberNotFoundException
+import org.abel.library.Book
+import org.abel.library.LibraryStorage
+import org.abel.library.Member
 
-class Library(
+class InMemoryLibraryStorage(
     private val members: MutableList<Member> = mutableListOf(),
     private val books: MutableList<Book> = mutableListOf()
-) : ILibrary {
+) : LibraryStorage {
     override fun addMember(name: String) {
         members.add(Member(members.size + 1, name))
     }
@@ -18,8 +23,8 @@ class Library(
         return member
     }
 
-    override fun addBook(name: String, author: String) {
-        books.add(Book(books.size + 1, name, author))
+    override fun addBook(title: String, author: String) {
+        books.add(Book(books.size + 1, title, author))
     }
 
     @Throws(BookNotFoundException::class, MemberNotFoundException::class)
@@ -27,7 +32,9 @@ class Library(
         val member = findMemberById(memberId)
         val book = findBookById(bookId)
 
-        member.borrowBook(book)
+        if (!book.isAvailable) throw BookNotAvailableException(book)
+        member.borrowedBooks.add(book)
+        book.isAvailable = false
     }
 
     @Throws(BookNotFoundException::class, MemberNotFoundException::class)
@@ -35,7 +42,14 @@ class Library(
         val member = findMemberById(memberId)
         val book = findBookById(bookId)
 
-        member.returnBook(book)
+        for (b in member.borrowedBooks) {
+            if (b.id == book.id) {
+                member.borrowedBooks.remove(b)
+                book.isAvailable = true
+                return
+            }
+        }
+        throw BookNotInPossessionException(book)
     }
 
     @Throws(BookNotFoundException::class)

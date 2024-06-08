@@ -3,10 +3,10 @@ package org.abel.cli
 import org.abel.cli.LibraryCommandFunctions.LibraryCommandFunction
 import org.abel.errors.InvalidNumberOfArgumentsException
 import org.abel.errors.UnknownCommandException
-import org.abel.library.ILibrary
-import org.abel.library.Library
+import org.abel.library.LibraryStorage
+import org.abel.simple.InMemoryLibraryStorage
 
-class ConsoleLibrary(private val library: ILibrary = Library()) {
+class ConsoleLibrary(private val library: LibraryStorage = InMemoryLibraryStorage()) {
     fun start() {
         println("Welcome to Library!")
         println("type 'help' to see available commands")
@@ -155,7 +155,7 @@ enum class CommandTypes(
 
 class LibraryCommandFunctions() {
     fun interface LibraryCommandFunction {
-        fun invoke(library: ILibrary, args: Array<String>): String
+        fun invoke(library: LibraryStorage, args: Array<String>): String
     }
 
     companion object {
