@@ -1,17 +1,16 @@
 package org.abel.cli
 
+import org.abel.cli.LibraryCommandFunctions.LibraryCommandFunction
 import org.abel.errors.InvalidNumberOfArgumentsException
 import org.abel.errors.UnknownCommandException
 import org.abel.library.ILibrary
 import org.abel.library.Library
 
 class ConsoleLibrary(private val library: ILibrary = Library()) {
-    private var programRunning: Boolean = true;
-
     fun start() {
         println("Welcome to Library!")
         println("type 'help' to see available commands")
-        while (programRunning) {
+        while (true) {
             val input = readlnOrNull()
             if (input != null) println(executeCommand(input))
         }
@@ -90,61 +89,61 @@ enum class CommandTypes(
     val command: String,
     val description: String,
     val numArgs: Int,
-    val function: (ILibrary, Array<String>) -> String
+    val function: LibraryCommandFunction
 ) {
     HELP(
         "help",
         "Show available commands or see description",
         0,
-        CommandFunctions::help
+        LibraryCommandFunctions.help
     ),
     ADD_BOOK(
         "add_book",
         """Add a book to the library: add_book "<title>" "<author>"""",
         2,
-        CommandFunctions::addBook
+        LibraryCommandFunctions.addBook
     ),
     ADD_MEMBER(
         "add_member",
         """Add a member to the library: add_member "<name>"""",
         1,
-        CommandFunctions::addMember
+        LibraryCommandFunctions.addMember
     ),
     BORROW_BOOK(
         "borrow_book",
         "Borrow a book: borrow_book <member_id> <book_id>",
         2,
-        CommandFunctions::borrowBook
+        LibraryCommandFunctions.borrowBook
     ),
     RETURN_BOOK(
         "return_book",
         "Return a book: return_book <member_id> <book_id>",
         2,
-        CommandFunctions::returnBook
+        LibraryCommandFunctions.returnBook
     ),
     FIND_MEMBER(
         "find_member",
         "Find member by id: find_member <member_id>",
         1,
-        CommandFunctions::findMember
+        LibraryCommandFunctions.findMember
     ),
     FIND_BOOK(
         "find_book",
         "Find book by id: find_member <book_id>",
         1,
-        CommandFunctions::findBook
+        LibraryCommandFunctions.findBook
     ),
     LIST_BOOKS(
         "list_books",
         "List all books",
         0,
-        CommandFunctions::listBooks
+        LibraryCommandFunctions.listBooks
     ),
     LIST_MEMBERS(
         "list_members",
         "List all members",
         0,
-        CommandFunctions::listMembers
+        LibraryCommandFunctions.listMembers
     );
 
     override fun toString(): String {
@@ -154,87 +153,99 @@ enum class CommandTypes(
 
 }
 
-private class CommandFunctions() {
+class LibraryCommandFunctions() {
+    fun interface LibraryCommandFunction {
+        fun invoke(library: ILibrary, args: Array<String>): String
+    }
+
     companion object {
-        fun help(library: ILibrary, args: Array<String>): String {
-            return CommandTypes.entries.joinToString(separator = "\n")
+        val help = LibraryCommandFunction { _, _ ->
+            CommandTypes.entries.joinToString(separator = "\n")
         }
 
-        fun addBook(library: ILibrary, args: Array<String>): String {
+        val addBook = LibraryCommandFunction { library, args ->
             try {
                 library.addBook(args[0], args[1])
-                return "Book added Successfully!"
+                "Book added Successfully!"
             } catch (e: Exception) {
-                return e.message!!
+                e.message!!
             }
         }
 
-        fun addMember(library: ILibrary, args: Array<String>): String {
+        val addMember = LibraryCommandFunction { library, args ->
             try {
                 library.addMember(args[0])
-                return "Member added Successfully!"
+                "Member added Successfully!"
             } catch (e: Exception) {
-                return e.message!!
+                e.message!!
             }
         }
 
-        fun borrowBook(library: ILibrary, args: Array<String>): String {
+        val borrowBook = LibraryCommandFunction { library, args ->
             try {
                 library.borrowBook(args[0].toInt(), args[1].toInt())
-                return "Book borrowed Successfully!"
+                "Book borrowed Successfully!"
             } catch (e: Exception) {
-                return e.message!!
+                e.message!!
             }
         }
 
-        fun returnBook(library: ILibrary, args: Array<String>): String {
+        val returnBook = LibraryCommandFunction { library, args ->
             try {
                 library.returnBook(args[0].toInt(), args[1].toInt())
-                return "Book returned Successfully!"
+                "Book returned Successfully!"
             } catch (e: Exception) {
-                return e.message!!
+                e.message!!
             }
         }
 
-        fun findMember(library: ILibrary, args: Array<String>): String {
-            return try {
+        val findMember = LibraryCommandFunction { library, args ->
+            try {
                 library.findMemberById(args[0].toInt()).toString()
             } catch (e: Exception) {
                 e.message!!
             }
         }
 
-        fun findBook(library: ILibrary, args: Array<String>): String {
-            return try {
+        val findBook = LibraryCommandFunction { library, args ->
+            try {
                 library.findBookById(args[0].toInt()).toString()
             } catch (e: Exception) {
                 e.message!!
             }
         }
 
-        fun listBooks(library: ILibrary, args: Array<String>): String {
+        val listBooks = LibraryCommandFunction { library, _ ->
             try {
                 val books = library.getBooks()
-                if (books.isEmpty()) return "No books in the library!"
-                val sb = StringBuilder()
-                sb.append("Books in the library:\n")
-                sb.append(books.joinToString(separator = "\n"))
-                return sb.toString()
+                when {
+                    books.isEmpty() -> "No books in the library!"
+                    else -> {
+                        val sb = StringBuilder()
+                        sb.append("Books in the library:\n")
+                        sb.append(books.joinToString(separator = "\n"))
+                        sb.toString()
+                    }
+                }
             } catch (e: Exception) {
-                return e.message!!
+                e.message!!
             }
         }
 
-        fun listMembers(library: ILibrary, args: Array<String>): String {
+        val listMembers = LibraryCommandFunction { library, _ ->
             try {
                 val members = library.getMembers()
-                if (members.isEmpty()) return "No members in the library!"
-                val sb = StringBuilder()
-                sb.append("Members in the library:\n")
-                sb.append(members.joinToString(separator = "\n"))
-                return sb.toString()
+                when {
+                    members.isEmpty() -> "No members in the library!"
+                    else -> {
+                        val sb = StringBuilder()
+                        sb.append("Members in the library:\n")
+                        sb.append(members.joinToString(separator = "\n"))
+                        sb.toString()
+                    }
+                }
             } catch (e: Exception) {
-                return e.message!!
+                e.message!!
             }
         }
     }

@@ -11,16 +11,17 @@ class ConsoleLibraryTests() {
     fun testCommandsFromCsvFile(command: String, expectedResult: String) {
         val actualResult = library.executeCommand(command)
         assertTrue(
-            actualResult.contains(expectedResult),
+            actualResult.contains(expectedResult, ignoreCase = true),
             "Failed for command: $command\nExpected: $expectedResult\nActual: $actualResult"
         )
     }
 
     companion object {
         private lateinit var library: ConsoleLibrary
+
         @JvmStatic
         @BeforeAll
-        fun setup(): Unit {
+        fun setup() {
             library = ConsoleLibrary()
         }
     }

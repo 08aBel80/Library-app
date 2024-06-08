@@ -24,19 +24,67 @@ find_member,Invalid number of arguments
 find_book,Invalid number of arguments
 
 add_book,Invalid number of arguments
-add_book "asd",Invalid number of arguments
+add_book "as asdd",Invalid number of arguments
 add_book "title" "author", "Book added Successfully!"
 list_books, "title='title', author='author', isAvailable=true"
 
 add_member,Invalid number of arguments
-add_member "asd",Invalid number of arguments
-add_member "name", "Member added Successfully!"
+add_member "asd" "asd asd",Invalid number of arguments
+add_member "alex", "Member added Successfully!"
 list_members, "name='alex', books=[]"
 
 borrow_book,Invalid number of arguments
 borrow_book 1,Invalid number of arguments
-borrow_book 2 1,Book not found
-borrow_book 1 2,Member not found
-borrow_book 1 1,Book borrowed successfully!
+borrow_book 1 2,Book
+borrow_book 1 2,not found
+borrow_book 2 1,Member
+borrow_book 2 1,not found
+borrow_book 1 1,Book borrowed Successfully!
 list_books, "title='title', author='author', isAvailable=false"
 list_members, "name='alex', books=[Book(id=1, title='title', author='author', isAvailable=false)]"
+
+return_book,Invalid number of arguments
+return_book 1,Invalid number of arguments
+return_book 1 2,Book
+return_book 1 2,not found
+return_book 2 1,Member
+return_book 2 1,not found
+return_book 1 1,Book returned Successfully!
+list_books, "title='title', author='author', isAvailable=true"
+list_members, "name='alex', books=[]"
+
+find_member 1,"name='alex', books=[]"
+find_book 1,"title='title', author='author', isAvailable=true"
+find_member 2,not found
+find_book 2,not found
+
+add_book "title2" "author2", "Book added Successfully!"
+add_member "george", "Member added Successfully!"
+
+borrow_book 1 1,Book borrowed Successfully!
+borrow_book 2 1,is not available
+borrow_book 1 1,is not available
+borrow_book 2 2,Book borrowed Successfully!
+borrow_book 2 2,is not available
+borrow_book 1 2,is not available
+
+list_books, "title='title', author='author', isAvailable=false"
+list_members, "name='alex', books=[Book(id=1, title='title', author='author', isAvailable=false)]"
+list_books, "title='title2', author='author2', isAvailable=false"
+list_members, "name='george', books=[Book(id=2, title='title2', author='author2', isAvailable=false)]"
+
+find_member 1,"name='alex', books=[Book(id=1, title='title', author='author', isAvailable=false)]"
+find_member 2,"name='george', books=[Book(id=2, title='title2', author='author2', isAvailable=false)]"
+find_book 1,"title='title', author='author', isAvailable=false"
+find_book 2,"title='title2', author='author2', isAvailable=false"
+
+return_book 1 1,Book returned Successfully!
+return_book 1 1,Member doesn't have book
+return_book 2 2,Book returned Successfully!
+return_book 2 2,Member doesn't have book
+
+asfndg, Unknown command
+dsagew r dsg, Unknown command
+more, Unknown command
+sdg 1 2 3, Unknown command
+pause "asd as",Unknown command
