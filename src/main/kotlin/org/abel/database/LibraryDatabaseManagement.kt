@@ -6,22 +6,31 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.Table
 
 class DatabaseManager(
-    private val name: String,
-    private val jdbcURL: String = "jdbc:sqlite:%s.db".format(name),
-    private val driverClass: String = "org.sqlite.JDBC",
+    private val jdbcURL: String,
+    private val dbUsername: String,
+    private val dbPassword: String,
+    private val driverClass: String,
     private val maxPoolSize: Int = 10
 ) {
-
+    /**
+     * Constructor for a SQLite database
+     */
+    constructor(
+        name: String
+    ) : this("jdbc:sqlite:%s.db".format(name), "", "", "org.sqlite.JDBC")
 
     private lateinit var dataSource: HikariDataSource
 
     init {
         val config = HikariConfig().apply {
             jdbcUrl = jdbcURL
+            username = dbUsername
+            password = dbPassword
             driverClassName = driverClass
             maximumPoolSize = maxPoolSize
             isAutoCommit = false
-            transactionIsolation = "TRANSACTION_SERIALIZABLE"
+//            transactionIsolation = "TRANSACTION_SERIALIZABLE"
+            transactionIsolation = "TRANSACTION_REPEATABLE_READ"
         }
 
         dataSource = HikariDataSource(config)
