@@ -8,21 +8,18 @@ import org.abel.errors.MemberNotFoundException
 import org.abel.library.Book
 import org.abel.library.LibraryStorage
 import org.abel.library.Member
-import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
 
-class SqlLibraryStorage(private val db: DatabaseManager) : LibraryStorage {
+class SqlLibraryStorage(private val db: Database) : LibraryStorage {
     init {
-        transaction(db.getDatabase()) {
+        transaction(db) {
             SchemaUtils.create(Books, Members)
         }
     }
 
     override fun addMember(name: String) {
-        transaction {
+        transaction(db) {
             Members.insert {
                 it[Members.name] = name
             }
@@ -32,7 +29,7 @@ class SqlLibraryStorage(private val db: DatabaseManager) : LibraryStorage {
 
     override fun findMemberById(id: Int): Member {
         return try {
-            transaction {
+            transaction(db) {
                 val member = Members.selectAll().where { Members.id eq id }.single()
                 val books = Books.selectAll().where { Books.borrowerId eq id }.map {
                     Book(it[Books.id], it[Books.title], it[Books.author], false)
@@ -50,7 +47,7 @@ class SqlLibraryStorage(private val db: DatabaseManager) : LibraryStorage {
     }
 
     override fun addBook(title: String, author: String) {
-        transaction {
+        transaction(db) {
             Books.insert {
                 it[Books.title] = title
                 it[Books.author] = author
@@ -59,7 +56,7 @@ class SqlLibraryStorage(private val db: DatabaseManager) : LibraryStorage {
     }
 
     override fun borrowBook(memberId: Int, bookId: Int) {
-        transaction {
+        transaction(db) {
             try {
                 Members.selectAll().where { Members.id eq memberId }.single()
             } catch (e: NoSuchElementException) {
@@ -84,7 +81,7 @@ class SqlLibraryStorage(private val db: DatabaseManager) : LibraryStorage {
 
 
     override fun returnBook(memberId: Int, bookId: Int) {
-        transaction {
+        transaction(db) {
             try {
                 Members.selectAll().where { Members.id eq memberId }.single()
             } catch (e: NoSuchElementException) {
@@ -109,7 +106,7 @@ class SqlLibraryStorage(private val db: DatabaseManager) : LibraryStorage {
 
     override fun findBookById(id: Int): Book {
         return try {
-            transaction {
+            transaction(db) {
                 val book = Books.selectAll().where { Books.id eq id }.single()
                 Book(book[Books.id], book[Books.title], book[Books.author], book[Books.borrowerId] == null)
             }
@@ -119,7 +116,7 @@ class SqlLibraryStorage(private val db: DatabaseManager) : LibraryStorage {
     }
 
     override fun getBooks(): List<Book> {
-        return transaction {
+        return transaction(db) {
             Books.selectAll().map {
                 Book(it[Books.id], it[Books.title], it[Books.author], it[Books.borrowerId] == null)
             }
@@ -127,7 +124,7 @@ class SqlLibraryStorage(private val db: DatabaseManager) : LibraryStorage {
     }
 
     override fun getMembers(): List<Member> {
-        return transaction {
+        return transaction(db) {
             Members.selectAll().map { m ->
                 val books = Books.selectAll().where { Books.borrowerId eq m[Members.id] }.map { b ->
                     Book(b[Books.id], b[Books.title], b[Books.author], false)

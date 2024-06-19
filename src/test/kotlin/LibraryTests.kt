@@ -1,6 +1,4 @@
-import org.abel.database.Books
-import org.abel.database.DatabaseManager
-import org.abel.database.Members
+import org.abel.database.DatabaseFactory
 import org.abel.database.SqlLibraryStorage
 import org.abel.errors.BookNotAvailableException
 import org.abel.errors.BookNotFoundException
@@ -10,8 +8,6 @@ import org.abel.library.Book
 import org.abel.library.LibraryStorage
 import org.abel.library.Member
 import org.abel.simple.InMemoryLibraryStorage
-import org.jetbrains.exposed.sql.deleteAll
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -19,11 +15,10 @@ import org.junit.jupiter.api.assertThrows
 
 
 private const val testingDatabaseEnabled: Boolean = true // Set this based on configuration
-private const val TEST_DATABASE_NAME = "build/test"
 
 fun getTestingLibraryStorage(): LibraryStorage {
     return if (testingDatabaseEnabled) {
-        val testDatabaseManager = DatabaseManager(TEST_DATABASE_NAME)
+        val testDatabaseManager = DatabaseFactory.getTestDatabase()
         SqlLibraryStorage(testDatabaseManager)
     } else {
         InMemoryLibraryStorage()
@@ -31,14 +26,12 @@ fun getTestingLibraryStorage(): LibraryStorage {
 }
 
 fun deleteTestingDatabase() {
-    if (testingDatabaseEnabled) {
-        transaction {
-            Members.deleteAll()
-            Books.deleteAll()
-        }
-    }
-}
 
+    if (testingDatabaseEnabled) {
+        DatabaseFactory.clearTestDatabase()
+    }
+
+}
 
 class ModelsEqualTests {
     @Test
