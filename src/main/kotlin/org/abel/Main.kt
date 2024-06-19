@@ -13,7 +13,6 @@ fun main() {
     consoleLibrary.start()
 }
 
-
 fun getInMemoryLibraryCLI(): LibraryStorage {
     return InMemoryLibraryStorage()
 }

@@ -1,5 +1,16 @@
+val kotlinVersion: String by project
+val logbackVersion: String by project
+val junitVersion: String by project
+val mysqlVersion: String by project
+val sqliteVersion: String by project
+val exposedVersion: String by project
+val hikariVersion: String by project
+val dotenvVersion: String by project
+val ktorVersion: String by project
+
 plugins {
-    kotlin("jvm") version "1.9.23"
+    kotlin("jvm") version "2.0.0"
+    id("io.ktor.plugin") version "2.3.11"
 }
 
 group = "org.example"
@@ -9,12 +20,6 @@ repositories {
     mavenCentral()
 }
 
-val junitVersion = "5.10.2"
-val mysqlVersion = "8.0.33"
-val sqliteVersion = "3.46.0.0"
-val exposedVersion = "0.51.1"
-val hikariVersion = "5.1.0"
-val dotenvVersion = "6.4.1"
 
 val databaseDependencies = listOf(
     "mysql:mysql-connector-java:$mysqlVersion",
@@ -22,13 +27,28 @@ val databaseDependencies = listOf(
     "org.jetbrains.exposed:exposed-core:$exposedVersion",
     "org.jetbrains.exposed:exposed-dao:$exposedVersion",
     "org.jetbrains.exposed:exposed-jdbc:$exposedVersion",
-    "com.zaxxer:HikariCP:5.0.1"
+    "com.zaxxer:HikariCP:$hikariVersion"
 )
+val ktorDependencies = listOf(
+    "io.ktor:ktor-server-core-jvm",
+    "io.ktor:ktor-server-netty-jvm",
+    "io.ktor:ktor-server-config-yaml"
+)
+
+application {
+    mainClass.set("io.ktor.server.netty.EngineMain")
+
+    val isDevelopment: Boolean = project.ext.has("development")
+    applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
+}
 
 dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:$junitVersion")
-    databaseDependencies.forEach(this::implementation)
+    testImplementation("io.ktor:ktor-server-tests-jvm")
     implementation("io.github.cdimascio:dotenv-kotlin:$dotenvVersion")
+    implementation("ch.qos.logback:logback-classic:$logbackVersion")
+    databaseDependencies.forEach(this::implementation)
+    ktorDependencies.forEach(this::implementation)
 }
 
 tasks.test {
