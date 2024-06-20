@@ -1,12 +1,18 @@
-package com.example
+package org.abel
 
-import com.example.plugins.*
 import io.ktor.server.application.*
+import io.ktor.server.netty.*
+import org.abel.database.DatabaseFactory
+import org.abel.database.SqlLibraryStorage
+import org.abel.plugins.configureRouting
+import org.abel.plugins.configureSerialization
 
 fun main(args: Array<String>) {
-    io.ktor.server.netty.EngineMain.main(args)
+    EngineMain.main(args)
 }
 
 fun Application.module() {
-    configureRouting()
+    configureSerialization()
+    configureRouting(SqlLibraryStorage(DatabaseFactory.getDevDatabase()))
 }
+

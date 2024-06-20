@@ -11,9 +11,10 @@ val ktorVersion: String by project
 plugins {
     kotlin("jvm") version "2.0.0"
     id("io.ktor.plugin") version "2.3.11"
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.0.0"
 }
 
-group = "org.example"
+group = "org.abel"
 version = "1.0-SNAPSHOT"
 
 repositories {
@@ -32,7 +33,10 @@ val databaseDependencies = listOf(
 val ktorDependencies = listOf(
     "io.ktor:ktor-server-core-jvm",
     "io.ktor:ktor-server-netty-jvm",
-    "io.ktor:ktor-server-config-yaml"
+    "io.ktor:ktor-server-config-yaml",
+    "io.ktor:ktor-server-host-common-jvm",
+    "io.ktor:ktor-server-content-negotiation-jvm",
+    "io.ktor:ktor-serialization-kotlinx-json-jvm"
 )
 
 application {

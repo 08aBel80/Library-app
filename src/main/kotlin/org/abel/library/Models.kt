@@ -1,6 +1,9 @@
 package org.abel.library
 
+import kotlinx.serialization.Serializable
 
+
+@Serializable
 data class Book(
     val id: Int,
     val title: String,
@@ -13,6 +16,7 @@ data class Book(
     }
 }
 
+@Serializable
 data class Member(
     val id: Int,
     val name: String,
