@@ -1,7 +1,146 @@
 <html>
- <head>
- </head>
- <body>
-   <h1>Hello Ktor!</h1>
- </body>
+<head>
+    <title>library</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: Arial, sans-serif;
+        }
+
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
+    <script type="application/javascript">
+        fetchAndDisplayBooks()
+        findAndDisplayMembers()
+
+        function fetchAndDisplayBooks() {
+            fetchBooks()
+                .then(books => displayBooks(books))
+        }
+
+        function fetchBooks() {
+            return fetch(
+                "/library/get-books",
+                {
+                    headers: {'Accept': 'application/json'}
+                }
+            ).then(resp => resp.json());
+        }
+
+        function displayBooks(books) {
+            const booksTableBody = document.getElementById("booksTableBody")
+            books.forEach(book => {
+                const newRow = bookRow(book);
+                booksTableBody.appendChild(newRow);
+            });
+        }
+
+        function bookRow(book) {
+            return tr([
+                td(book.id),
+                td(book.title),
+                td(book.author),
+                td(book.isAvailable)
+            ]);
+        }
+
+        function findAndDisplayMembers() {
+            findMembers()
+                .then(members => displayMembers(members))
+        }
+
+        function findMembers() {
+            return fetch("/library/get-members", {
+                headers: {'Accept': 'application/json'}
+            }).then(resp => resp.json());
+        }
+
+        function displayMembers(members) {
+            const membersTableBody = document.getElementById("membersTableBody")
+            members.forEach(member => {
+                const newRow = memberRow(member);
+                membersTableBody.appendChild(newRow);
+            });
+        }
+
+        function memberRow(member) {
+            return tr([
+                td(member.id),
+                td(member.name),
+                memberBooksTd(member.borrowedBooks)
+            ]);
+        }
+
+        function tr(children) {
+            const node = document.createElement("tr");
+            children.forEach(child => node.appendChild(child));
+            return node;
+        }
+
+        function td(text) {
+            const node = document.createElement("td");
+            node.appendChild(document.createTextNode(text));
+            return node;
+        }
+
+        function memberBooksTd(books) {
+            const td = document.createElement("td");
+            const ul = document.createElement("ul");
+            books.forEach(book => {
+                const li = document.createElement("li");
+                li.textContent = `id: ${book.id} name: ${book.title}`;
+                ul.appendChild(li);
+            })
+            td.appendChild(ul);
+            return td;
+        }
+
+    </script>
+</head>
+<body>
+
+<h1>Welcome to Library!</h1>
+<div class="books-table">
+    <h1>available books</h1>
+    <table>
+        <thead>
+        <tr>
+            <th>Id</th>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Available</th>
+        </tr>
+        </thead>
+        <tbody id="booksTableBody">
+        </tbody>
+    </table>
+</div>
+<div class="members-table">
+    <h1>members</h1>
+    <table>
+        <thead>
+        <tr>
+            <th>Id</th>
+            <th>Name</th>
+            <th>Books</th>
+        </tr>
+        </thead>
+        <tbody id="membersTableBody">
+        </tbody>
+    </table>
+</div>
+</body>
 </html>
